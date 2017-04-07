@@ -1,1 +1,206 @@
-qwerty
+Очередь Сообщений 
+
+если удаляем кога кто-то ждем то получим сообщение об ошибке
+очередь живет пока не удалят
+
+создание и удаление 
+ipcs
+ipcrm
+
+создание 
+int msget(key, flag)
+flag (IPC_CREAT и права доступа)
+ключ - число
+вызов ftoc(file, num(0 - 155)) получит ключ
+второй вариант  IPC_PRIVATE
+
+удаление 
+int masgctl(msgid, IPC_RML, NULL)
+
+передача 
+int msgsnd(int msgid, const void* msg, int size, flag);
+
+получение 
+recive(int msgid, void * msg, size, long type, int flag);
+
+msg 
+struct msg{
+	long type; > 0
+	paylod[];
+}
+
+> 0
+первое сообщение с нужным типом
+
+< 0 первые меньше данных
+
+=0 первое
+
+задание программа порождает n детей
+а потом печатает
+
+
+
+
+
+семафоры 
+
+ползволяют дожидаться 0
+
+int id = semget(key, size ,flag) create
+semctl(id, IPC_REMOVE) delete
+
+increment
+semop(id, struct semop *ops, int n)
+
+struct semop
+{
+	sem_num; номер семафора
+	sem_op;  +1 / -1 / 0 
+	sem_flg; IPC_NOWAIT, SEM_UNDO  позволяет откатить значение переменной семафора 
+}
+
+разделяемая память 
+
+int id = shmget(key, size ,flag) create
+shmctl(id, IPC_REMOVE) delete
+void *shmat(id, NULL,  ) get adress
+(void *) -1
+int shmdt(void * adr)
+
+программа 
+1 задача с семафорами  и разделяемой памятью
+значение семафора = 0
+
+
+
+
+
+
+сигналы 
+
+отправка int kill(int pid, int signo)
+								0 - если процесс существует
+					pid > 0  отправляется процессу с данным pid
+					pid < 0  отправляет группе процессов (-1 всем процессам) 
+обработчик сигналов
+signal не стандартеризирован 
+int sigaction(int signum, struct sigaction *act, struct sigaction * oldact )
+
+.sa_handler = handler остальные поля 0 
+ 
+ манипуляция разрешением сигнала
+ sigprocmask(int how, sigse_t *set, sigset_t *old)
+ sigemptyset() обнулить маску
+ sigfillset() заполнить маску
+ sigaddset()
+ sigdelset()
+ sigmember()
+ поле how 
+ sig_block
+ sig_unblock
+ sig_setmask
+
+ sigpending()? посмтореть все не обработанные сигналы
+
+ функции обработчика
+ sig_dfl
+ sig_ign - к handler
+
+ дождаться сигнала
+ pause()// не хороший вызов
+
+ int sigsuspend(sigset_t *mask)
+ sigprocmask()/
+ pause/
+ sigprocmask()/
+ атомарный вызов
+
+ отложенный способ доставки сигнла
+ alarm(int second (0)/ снять)
+
+ задача на +
+ программа порождает дочерний процесс
+ + печать файла 
+ ребенок отправляет родителю
+
+ prctl()
+
+
+man signal 7
+sighub
+сеанс все процессы привязанные к одному терминалу
+после смерти лидера сеанса все получают этот сигнал
+лидер сеанса выполняет вызов setsid()
+создается сеанс с номером pid процесса 
+процесс daemon
+demon()
+все демонизированные процессы загружают юю
+
+sigint (секд + с)
+sigill d 32 битном режиме выполняем 64 битную инструкцию
+sigabrt// вызов функции abort
+sigfpe 
+sigkill out of memory killer (сигнал sigterm ждется 5 сек потом sigkill)
+sigserv  и sigbus невозможно выполнить страничное преобразование
+		setjmp longjmp 
+sigpipe нет конча для чтения
+sigalarm	alarm(sec)
+sigterm аккуратно остановть программу
+sigusr1 по умолчанию 
+sigusr2 	убить процесс
+sigchld родительский процесс при смерти ребенка
+sigcont sigstop нельязя перехватить один останавливает процесс другой возобновляет 
+когда уходит лидер сигнала всем посылается sigcont
+
+
+poll
+select
+
+int select (int fdmax, fd_set *readfd, fd_set *writefd, fd_ssey except_fd, struct timeout *timeout)
+
+fd_set 
+FD_CLR
+FD_SET
+FD_ZERO
+FD_ISSSET
+
+epoll
+eselect
+
+4+
+2 аргумета
+1 колличество процессов
+2 имя файл
+взаимодействи через родителя
+3^n - 1
+3^(n-1) в родительском процессе
+в ребенке сколько угодно
+признаком конца нельзя использвать колличество прочитанных байт
+операции чтения могут быть частично успешны
+
+
+
+
+
+
+fd = eventfd(0, EFD_NONBLOCK | EFD_CLOEXEC); пока 0 операция read блокируется 
+ epoll = epol_create();
+ struct epoll_event ev
+ memset(&ev, 0, sizof(ev));
+ ev.data.fd = fd
+ ev.event = POLIN POLOUT
+ ev.data.ptr = ctxepol //context
+ epoll_ctl(epoll, EPOLL_CTL_ADD, fd, &ev)
+epoll_wait(epoll,)
+
+
+io_context aio
+io-setup(256, &aio)
+
+struct iocb io
+io_prep_pread(&oiocb, fd, buf, count, flag);
+io_set_eventfd(&io, eventfd);
+io_submit(aio, 1, &io)
+epoll_wait
+io_getevents()  

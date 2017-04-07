@@ -56,7 +56,7 @@ int main(int argc, char const *argv[])
 		return 1;
 	}
 
-	sleep(1);
+	sleep(2);
 	if((fifo_fd = open(fifoName, O_WRONLY | O_NONBLOCK)) < 0)
 	{
 		perror("can not open fifo");
